@@ -5,7 +5,6 @@ android {
     namespace 'com.wade.compass'
 
     defaultConfig {
-//    applicationId "com.wade.compass"
         minSdkVersion 16
         targetSdkVersion 33
         versionCode 202009280
