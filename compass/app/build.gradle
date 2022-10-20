@@ -1,5 +1,9 @@
 apply plugin: 'com.android.application'
 
+repositories {
+    mavenCentral()
+}
+
 android {
     compileSdkVersion 33
     namespace 'com.wade.compass'
@@ -7,8 +11,16 @@ android {
     defaultConfig {
         minSdkVersion 16
         targetSdkVersion 33
-        versionCode 202009280
-        versionName "1.1.3"
+        versionCode 20221019
+        versionName "20221019"
+    }
+    signingConfigs {
+        config {
+            keyAlias 'androidapk'
+            keyPassword 'jjchen'
+            storeFile file('/home/wade/.ssh/androidapk.jks')
+            storePassword 'jjchen'
+        }
     }
 
     buildTypes {
@@ -16,11 +28,28 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+        applicationVariants.all { variant ->
+            variant.outputs.all { output ->
+                project.ext { appName = android.defaultConfig.applicationId }
+                def newName = outputFileName
+                newName = newName.replace("app-", "$project.ext.appName-")
+                newName = newName.replace("release", android.defaultConfig.versionName)
+                outputFileName = newName
+            }
+        }
+    }
+    lint {
+        checkReleaseBuilds false
     }
 }
 
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation 'androidx.appcompat:appcompat:1.5.1'
-
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'com.google.android.material:material:1.6.1'
+    implementation 'androidx.navigation:navigation-fragment:2.5.2'
+    implementation 'androidx.navigation:navigation-ui:2.5.2'
+    implementation 'com.google.android.gms:play-services-location:21.0.0'
+    implementation 'androidx.fragment:fragment-ktx:1.6.0-alpha03'
 }
