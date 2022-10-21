@@ -6,13 +6,21 @@
     <string name="compass_dial" translatable="false">Compass Dial</string>
     <string name="compass_hands" translatable="false">Compass Hands</string>
 
-    <string name="sotw_north">N</string>
-    <string name="sotw_east">E</string>
-    <string name="sotw_south">S</string>
-    <string name="sotw_west">W</string>
-    <string name="sotw_northeast">NE</string>
-    <string name="sotw_northwest">NW</string>
-    <string name="sotw_southeast">SE</string>
-    <string name="sotw_southwest">SW</string>
+    <string name="sotw_north">北</string>
+    <string name="sotw_nne">北北東</string>
+    <string name="sotw_northeast">東北</string>
+    <string name="sotw_ene">東北東</string>
+    <string name="sotw_east">東</string>
+    <string name="sotw_ese">東南東</string>
+    <string name="sotw_southeast">東南</string>
+    <string name="sotw_sse">南南東</string>
+    <string name="sotw_south">南</string>
+    <string name="sotw_ssw">南南西</string>
+    <string name="sotw_southwest">西南</string>
+    <string name="sotw_wsw">西南西</string>
+    <string name="sotw_west">西</string>
+    <string name="sotw_wnw">西北西</string>
+    <string name="sotw_northwest">西北</string>
+    <string name="sotw_nnw">北北西</string>
 
 </resources>

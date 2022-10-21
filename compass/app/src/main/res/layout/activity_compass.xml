@@ -8,11 +8,21 @@
 
     <ImageView
         android:id="@+id/main_image_dial"
-        android:layout_width="320dp"
-        android:layout_height="320dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_centerInParent="true"
-        android:contentDescription="@string/compass_dial"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
         android:src="@drawable/dial" />
+
+    <ImageView
+        android:id="@+id/arrow"
+        android:layout_height="150dp"
+        android:layout_width="150dp"
+        android:layout_gravity="center"
+        android:layout_centerInParent="true"
+        android:scaleType="fitXY"
+        android:src="@drawable/arrow3" />
 
     <ImageView
         android:id="@+id/main_image_hands"
@@ -50,14 +60,5 @@
         android:layout_below="@id/speed"
         android:layout_centerHorizontal="true"
         />
-
-    <ImageView
-        android:id="@+id/arrow"
-        android:layout_height="warp_content"
-        android:layout_width="wrap_content"
-        android:layout_gravity="center"
-        android:layout_centerInParent="true"
-        android:scaleType="fitXY"
-        android:src="@drawable/arrow3" />
 
 </RelativeLayout>

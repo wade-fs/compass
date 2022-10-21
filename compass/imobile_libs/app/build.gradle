@@ -1,0 +1,46 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        minSdkVersion 9
+        targetSdkVersion 28
+    }
+    buildTypes {
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility = '1.7'
+        targetCompatibility = '1.7'
+    }
+}
+dependencies {
+    implementation 'com.readystatesoftware.sqliteasset:sqliteassethelper:2.0.1'
+}
+//android.libraryVariants.all { variant ->
+//  def name = variant.buildType.name
+//  if (name.equals(com.android.builder.core.BuilderConstants.DEBUG)) {
+//    return; // Skip debug builds.
+//  }
+//  def task = project.tasks.create "jar${name.capitalize()}", Jar
+//  task.dependsOn variant.javaCompileProvider
+//  task.from variant.javaCompileProvider.destinationDir
+//  artifacts.add('archives', task);
+//}
+task createJar(type: Copy) {
+  from('build/intermediates/packaged-classes/release/')
+  into('libs/')
+  include('classes.jar')
+  rename('classes.jar', 'imobile_libs.jar')
+}
+task deleteJar (type: Delete) {
+  delete 'libs/imobile_libs.jar'
+}
+createJar.dependsOn(deleteJar, build)

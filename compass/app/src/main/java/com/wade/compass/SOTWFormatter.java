@@ -15,7 +15,24 @@ import android.content.Context;
  * https://www.geeksforgeeks.org/find-closest-number-array/
  */
 public class SOTWFormatter {
-    private static final int[] sides = {0, 45, 90, 135, 180, 225, 270, 315, 360};
+    private static final float[] sides = {
+            0.0f,
+            22.5f,
+            45.0f,
+            67.5f,
+            90.0f,
+            112.5f,
+            135.0f,
+            157.5f,
+            180.0f,
+            202.5f,
+            225.0f,
+            247.5f,
+            270.0f,
+            292.5f,
+            315.0f,
+            337.5f,
+            360.0f};
     private static String[] names = null;
 
     public SOTWFormatter(Context context) {
@@ -36,13 +53,21 @@ public class SOTWFormatter {
         if (names == null) {
             names = new String[]{
                     context.getString(R.string.sotw_north),
+                    context.getString(R.string.sotw_nne),
                     context.getString(R.string.sotw_northeast),
+                    context.getString(R.string.sotw_ene),
                     context.getString(R.string.sotw_east),
+                    context.getString(R.string.sotw_ese),
                     context.getString(R.string.sotw_southeast),
+                    context.getString(R.string.sotw_sse),
                     context.getString(R.string.sotw_south),
+                    context.getString(R.string.sotw_ssw),
                     context.getString(R.string.sotw_southwest),
+                    context.getString(R.string.sotw_wsw),
                     context.getString(R.string.sotw_west),
+                    context.getString(R.string.sotw_wnw),
                     context.getString(R.string.sotw_northwest),
+                    context.getString(R.string.sotw_nnw),
                     context.getString(R.string.sotw_north)
             };
         }
