@@ -20,6 +20,11 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.ContextCompat;
+import com.wade.libs.CPDB;
+import com.wade.libs.Proj;
+import com.wade.libs.Tools;
+
+import java.util.Locale;
 
 
 public class CompassActivity extends AppCompatActivity {
@@ -29,10 +34,13 @@ public class CompassActivity extends AppCompatActivity {
 
     private Compass compass;
     private ImageView arrowView;
-    private TextView sotwLabel;  // SOTW is for "side of the world"
+    private String sotw;
 
     private float currentAzimuth;
     private SOTWFormatter sotwFormatter;
+    private Proj mProj;
+    private CPDB cpdb;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,9 +53,10 @@ public class CompassActivity extends AppCompatActivity {
 		// Compass
         sotwFormatter = new SOTWFormatter(this);
 
-        arrowView = findViewById(R.id.main_image_hands);
-        sotwLabel = findViewById(R.id.sotw_label);
+        arrowView = findViewById(R.id.main_image_dial);
         setupCompass();
+        mProj = new Proj();
+        cpdb = new CPDB(this);
     }
 
     @Override
@@ -103,7 +112,7 @@ public class CompassActivity extends AppCompatActivity {
     }
 
     private void adjustSotwLabel(float azimuth) {
-        sotwLabel.setText(sotwFormatter.format(azimuth));
+        sotw = sotwFormatter.format(azimuth);
     }
 
     private Compass.CompassListener getCompassListener() {
@@ -173,12 +182,22 @@ public class CompassActivity extends AppCompatActivity {
     }
 
     private void displayCurrentLocation(Location location) {
-        String message = (location.getLatitude()) + ", " + location.getLongitude();
-        setTextFor(R.id.location, "Coordinates: " + message);
-        setTextFor(R.id.speed, "Speed: " + location.getSpeed());
-        setTextFor(R.id.orientation, "Orientation: " + location.getBearing());
-
+        // 先讓小綠人指向前進方向
         findViewById(R.id.arrow).setRotation(location.getBearing());
+        double[] res = mProj.LL2UTM(location.getLongitude(), location.getLatitude(), 0);
+        double[] res2 = mProj.LL2TM2(location.getLongitude(), location.getLatitude());
+
+        String message = (location.getLatitude()) + ", " + location.getLongitude();
+        setTextFor(R.id.asa, String.format(Locale.TRADITIONAL_CHINESE,"精確度:%s 橢球高:%.2f公尺 速度:%.2f公尺/秒",
+                location.hasAccuracy() ? String.format(Locale.TRADITIONAL_CHINESE, "%.1f公尺",location.getAccuracy()):"未知",
+        location.getAltitude(), location.getSpeed()));
+
+        setTextFor(R.id.longitude, "經　度: " + Tools.Deg2DmsStr2(location.getLongitude()));
+        setTextFor(R.id.latitude, "緯　度: " + Tools.Deg2DmsStr2(location.getLatitude()));
+
+        setTextFor(R.id.bearing, String.format(Locale.TRADITIONAL_CHINESE, "航　向: %s", Tools.ang2Str(location.getBearing())));
+        setTextFor(R.id.utm6, String.format(Locale.TRADITIONAL_CHINESE,    "UTM6 : E%.2f, N%.2f", res[0], res[1]));
+        setTextFor(R.id.tm2, String.format(Locale.TRADITIONAL_CHINESE,    "TM2　　: E%.2f, N%.2f", res2[0], res2[1]));
     }
 
     private void setTextFor(int p, String text) {
