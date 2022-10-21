@@ -24,6 +24,9 @@ import com.wade.libs.CPDB;
 import com.wade.libs.Proj;
 import com.wade.libs.Tools;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -180,6 +183,24 @@ public class CompassActivity extends AppCompatActivity {
     private void explainTheNeedForPermission() {
         Toast.makeText(this, "We need to talk.", Toast.LENGTH_SHORT).show();
     }
+    private double lastX = 0, lastY = 0;
+
+    public static String cpName(int t) {
+        switch (t) {
+            case 1: return "一等連續站";
+            case 2: return "一等控制點";
+            case 3: return "二等控制點";
+            case 4: return "三等控制點";
+            case 5: return "一等水準點";
+            case 6: return "金門";
+            case 7: return "馬祖";
+            case 8: return "澎湖";
+            case 9: return "永康";
+            case 10: return "歸仁";
+            case 11: return "關廟";
+            default:return "";
+        }
+    }
 
     private void displayCurrentLocation(Location location) {
         // 先讓小綠人指向前進方向
@@ -198,6 +219,38 @@ public class CompassActivity extends AppCompatActivity {
         setTextFor(R.id.bearing, String.format(Locale.TRADITIONAL_CHINESE, "航　向: %s", Tools.ang2Str(location.getBearing())));
         setTextFor(R.id.utm6, String.format(Locale.TRADITIONAL_CHINESE,    "UTM6 : E%.2f, N%.2f", res[0], res[1]));
         setTextFor(R.id.tm2, String.format(Locale.TRADITIONAL_CHINESE,    "TM2　　: E%.2f, N%.2f", res2[0], res2[1]));
+
+        double dx = res2[0] - lastX;
+        double dy = res2[1]  - lastY;
+        if (Math.sqrt(dx*dx + dy*dy) > 0.1) {
+            lastX = res2[0];
+            lastY = res2[1];
+            List<CPDB.CP> cps = cpdb.getCp(lastX, lastY, 0);
+            if (cps.size() > 0) {
+                Collections.sort(cps, new Comparator<CPDB.CP>() {
+                    @Override
+                    public int compare(CPDB.CP o1, CPDB.CP o2) {
+                        double d = (Math.pow(o1.x - lastX, 2) + Math.pow(o1.y - lastY, 2)) -
+                                (Math.pow(o2.x - lastX, 2) + Math.pow(o2.y - lastY, 2));
+                        if (d > 0) return 1;
+                        else if (d == 0) return 0;
+                        else return -1;
+                    }
+                });
+                String cpMsg = "== 鄰近控制點 ==\n";
+                for (CPDB.CP cp : cps) {
+                    double dx1 = cp.x - res2[0], dy1 = cp.y-res2[1];
+                    double[] resCP = Tools.POLd(dy1, dx1);
+                    cpMsg += String.format(Locale.CHINESE, "\n[%s]%s\n@%d(%s)\n%.0fE,%.0fN\n距離=%.2f公尺\n方位=%s\n",
+                            cp.number, (cp.name.length()>0?cp.name:""),
+                            cp.t, cpName(cp.t),
+                            cp.x, cp.y,
+                            resCP[0], Tools.Deg2DmsStr2(resCP[1])
+                    );
+                }
+                setTextFor(R.id.cp, cpMsg);
+            }
+        }
     }
 
     private void setTextFor(int p, String text) {
