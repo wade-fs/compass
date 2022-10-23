@@ -1,6 +1,7 @@
 package com.wade.compass;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -90,6 +91,7 @@ public class CompassActivity extends AppCompatActivity {
                         .show();
             }
         });
+        compass.setPhoneOrientation(getResources().getConfiguration().orientation);
     }
 
     @Override
@@ -157,7 +159,19 @@ public class CompassActivity extends AppCompatActivity {
         };
     }
 
-	////////////////////////////////////////////////////////////////////
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        // Checks the orientation of the screen
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            compass.setPhoneOrientation(Configuration.ORIENTATION_LANDSCAPE);
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
+            compass.setPhoneOrientation(Configuration.ORIENTATION_PORTRAIT);
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////
 	// GPS
 	////////////////////////////////////////////////////////////////////
     private ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(

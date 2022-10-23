@@ -1,10 +1,13 @@
 package com.wade.compass;
 
 import android.content.Context;
+import android.content.pm.ConfigurationInfo;
+import android.content.res.Configuration;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.Log;
 
 public class Compass implements SensorEventListener {
     private static final String TAG = "Compass";
@@ -14,7 +17,7 @@ public class Compass implements SensorEventListener {
     }
 
     private CompassListener listener;
-
+    private int phoneOrientation = Configuration.ORIENTATION_PORTRAIT;
     private SensorManager sensorManager;
     private Sensor gsensor;
     private Sensor msensor;
@@ -34,6 +37,9 @@ public class Compass implements SensorEventListener {
         msensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
     }
 
+    public void setPhoneOrientation(int o) {
+        phoneOrientation = o;
+    }
     public void start() {
         sensorManager.registerListener(this, gsensor,
                 SensorManager.SENSOR_DELAY_GAME);
@@ -43,14 +49,6 @@ public class Compass implements SensorEventListener {
 
     public void stop() {
         sensorManager.unregisterListener(this);
-    }
-
-    public void setAzimuthFix(float fix) {
-        azimuthFix = fix;
-    }
-
-    public void resetAzimuthFix() {
-        setAzimuthFix(0);
     }
 
     public void setListener(CompassListener l) {
@@ -82,7 +80,11 @@ public class Compass implements SensorEventListener {
                 SensorManager.getOrientation(R, orientation);
                 // Log.d(TAG, "azimuth (rad): " + azimuth);
                 azimuth = (float) Math.toDegrees(orientation[0]); // orientation
-                azimuth = (azimuth + azimuthFix + 360) % 360;
+                if (phoneOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    azimuth = azimuth + 90.0f;
+                }
+                Log.d("GPS", "Ori: "+phoneOrientation);
+                azimuth = (azimuth + 360) % 360;
                 // Log.d(TAG, "azimuth (deg): " + azimuth);
                 if (listener != null) {
                     listener.onNewAzimuth(azimuth);
