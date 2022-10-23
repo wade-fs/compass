@@ -9,10 +9,11 @@ android {
     namespace 'com.wade.compass'
 
     defaultConfig {
+		applicationId 'com.wade.compass'
         minSdkVersion 16
         targetSdkVersion 33
-        versionCode 20221019
-        versionName "20221019"
+        versionCode 20221023
+        versionName "20221023"
     }
     signingConfigs {
         config {
