@@ -40,9 +40,10 @@ public class SOTWFormatter {
     }
 
     public String format(float azimuth) {
-        int iAzimuth = (int)azimuth;
-        int index = findClosestIndex(iAzimuth);
-        return iAzimuth + "° " + names[index];
+//        int iAzimuth = (int)azimuth;
+//        int index = findClosestIndex(iAzimuth);
+//        return iAzimuth + "° " + names[index];
+        return names[findClosestIndex((int)azimuth)];
     }
 
     private void initLocalizedNames(Context context) {

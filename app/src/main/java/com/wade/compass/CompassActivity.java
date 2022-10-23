@@ -37,13 +37,12 @@ public class CompassActivity extends AppCompatActivity {
 
     private Compass compass;
     private ImageView arrowView;
-    private String sotw;
 
     private float currentAzimuth;
     private SOTWFormatter sotwFormatter;
     private Proj mProj;
     private CPDB cpdb;
-
+    private List<CPDB.CP> cps;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,10 +113,6 @@ public class CompassActivity extends AppCompatActivity {
         arrowView.startAnimation(an);
     }
 
-    private void adjustSotwLabel(float azimuth) {
-        sotw = sotwFormatter.format(azimuth);
-    }
-
     private Compass.CompassListener getCompassListener() {
         return new Compass.CompassListener() {
             @Override
@@ -128,7 +123,6 @@ public class CompassActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         adjustArrow(azimuth);
-                        adjustSotwLabel(azimuth);
                     }
                 });
             }
@@ -208,7 +202,6 @@ public class CompassActivity extends AppCompatActivity {
         double[] res = mProj.LL2UTM(location.getLongitude(), location.getLatitude(), 0);
         double[] res2 = mProj.LL2TM2(location.getLongitude(), location.getLatitude());
 
-        String message = (location.getLatitude()) + ", " + location.getLongitude();
         setTextFor(R.id.asa, String.format(Locale.TRADITIONAL_CHINESE,"精確度:%s 橢球高:%.2f公尺 速度:%.2f公尺/秒",
                 location.hasAccuracy() ? String.format(Locale.TRADITIONAL_CHINESE, "%.1f公尺",location.getAccuracy()):"未知",
         location.getAltitude(), location.getSpeed()));
@@ -216,36 +209,41 @@ public class CompassActivity extends AppCompatActivity {
         setTextFor(R.id.longitude, "經　度: " + Tools.Deg2DmsStr2(location.getLongitude()));
         setTextFor(R.id.latitude, "緯　度: " + Tools.Deg2DmsStr2(location.getLatitude()));
 
-        setTextFor(R.id.bearing, String.format(Locale.TRADITIONAL_CHINESE, "航　向: %s", Tools.ang2Str(location.getBearing())));
+        float bearing = location.getBearing();
+        setTextFor(R.id.bearing, String.format(Locale.TRADITIONAL_CHINESE, "航　向: %s", sotwFormatter.format(bearing)+" "+Tools.ang2Str(bearing)));
         setTextFor(R.id.utm6, String.format(Locale.TRADITIONAL_CHINESE,    "UTM6 : E%.2f, N%.2f", res[0], res[1]));
         setTextFor(R.id.tm2, String.format(Locale.TRADITIONAL_CHINESE,    "TM2　　: E%.2f, N%.2f", res2[0], res2[1]));
 
         double dx = res2[0] - lastX;
         double dy = res2[1]  - lastY;
-        if (Math.sqrt(dx*dx + dy*dy) > 0.1) {
+        if (Math.sqrt(dx*dx + dy*dy) > 1) {
             lastX = res2[0];
             lastY = res2[1];
-            List<CPDB.CP> cps = cpdb.getCp(lastX, lastY, 0);
+            cps = cpdb.getCp(lastX, lastY, 0);
             if (cps.size() > 0) {
-                Collections.sort(cps, new Comparator<CPDB.CP>() {
-                    @Override
-                    public int compare(CPDB.CP o1, CPDB.CP o2) {
-                        double d = (Math.pow(o1.x - lastX, 2) + Math.pow(o1.y - lastY, 2)) -
-                                (Math.pow(o2.x - lastX, 2) + Math.pow(o2.y - lastY, 2));
-                        if (d > 0) return 1;
-                        else if (d == 0) return 0;
-                        else return -1;
-                    }
+                // 先依距離排序
+                Collections.sort(cps, (o1, o2) -> {
+                    double d = (Math.pow(o1.x - lastX, 2) + Math.pow(o1.y - lastY, 2)) -
+                            (Math.pow(o2.x - lastX, 2) + Math.pow(o2.y - lastY, 2));
+                    if (d > 0) return 1;
+                    else if (d == 0) return 0;
+                    else return -1;
                 });
-                String cpMsg = "== 鄰近控制點 ==\n";
+                String cpMsg = "";
                 for (CPDB.CP cp : cps) {
                     double dx1 = cp.x - res2[0], dy1 = cp.y-res2[1];
                     double[] resCP = Tools.POLd(dy1, dx1);
-                    cpMsg += String.format(Locale.CHINESE, "\n[%s]%s\n@%d(%s)\n%.0fE,%.0fN\n距離=%.2f公尺\n方位=%s\n",
-                            cp.number, (cp.name.length()>0?cp.name:""),
-                            cp.t, cpName(cp.t),
+//                    cpMsg += String.format(Locale.CHINESE, "[%s]%s\n@%d(%s)\n%.0fE,%.0fN\n距離=%.2f公尺\n方位=%s\n",
+//                            cp.number, (cp.name.length()>0?cp.name:""),
+//                            cp.t, cpName(cp.t),
+//                            cp.x, cp.y,
+//                            resCP[0],
+//                            Tools.Deg2DmsStr2(resCP[1])
+//                    );
+                    cpMsg += String.format(Locale.CHINESE, "[%s]%s#%d　E%.0f,N%.0f　%.2f公尺\n",
+                            cp.number, (cp.name.length()>0?cp.name:""), cp.t,
                             cp.x, cp.y,
-                            resCP[0], Tools.Deg2DmsStr2(resCP[1])
+                            resCP[0]
                     );
                 }
                 setTextFor(R.id.cp, cpMsg);
