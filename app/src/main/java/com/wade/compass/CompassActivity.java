@@ -1,12 +1,17 @@
 package com.wade.compass;
 
+import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import android.Manifest;
@@ -20,10 +25,13 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.ContextCompat;
+
+import com.google.android.material.snackbar.Snackbar;
 import com.wade.libs.CPDB;
 import com.wade.libs.Proj;
 import com.wade.libs.Tools;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -42,23 +50,46 @@ public class CompassActivity extends AppCompatActivity {
     private SOTWFormatter sotwFormatter;
     private Proj mProj;
     private CPDB cpdb;
-    private List<CPDB.CP> cps;
+    private ListView lvCps;
+    private static CpsAdapter cpsAdapter;
+    private List<CPDB.CP> cps = new ArrayList<>();
+    private double[] O = new double[]{0,0};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_compass);
 
-		// GPS
-		checkPermissions();
-
 		// Compass
         sotwFormatter = new SOTWFormatter(this);
 
         arrowView = findViewById(R.id.main_image_dial);
         setupCompass();
+
+        // GPS
+        checkPermissions();
         mProj = new Proj();
         cpdb = new CPDB(this);
+
+        lvCps = findViewById(R.id.cps);
+        lvCps.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                CPDB.CP cp = cps.get(position);
+                double dx1 = cp.x - O[0], dy1 = cp.y-O[1];
+                double[] toCp = Tools.POLd(dy1, dx1);
+
+                Snackbar.make(view, "控制點", Snackbar.LENGTH_LONG)
+                        .setText(String.format(Locale.CHINESE, "[%s]%s @%d(%s) %.2f公尺\n方位=%s E%.0f,N%.0f",
+                                cp.number, (cp.name.length()>0?cp.name:""),
+                                cp.t, cpName(cp.t),
+                                toCp[0], Tools.Deg2DmsStr2(toCp[1]),
+                                cp.x, cp.y
+                        ))
+                        .show();
+            }
+        });
     }
 
     @Override
@@ -114,21 +145,17 @@ public class CompassActivity extends AppCompatActivity {
     }
 
     private Compass.CompassListener getCompassListener() {
-        return new Compass.CompassListener() {
-            @Override
-            public void onNewAzimuth(final float azimuth) {
-                // UI updates only in UI thread
-                // https://stackoverflow.com/q/11140285/444966
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        adjustArrow(azimuth);
-                    }
-                });
-            }
+        return azimuth -> {
+            // UI updates only in UI thread
+            // https://stackoverflow.com/q/11140285/444966
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    adjustArrow(azimuth);
+                }
+            });
         };
     }
-
 
 	////////////////////////////////////////////////////////////////////
 	// GPS
@@ -200,7 +227,7 @@ public class CompassActivity extends AppCompatActivity {
         // 先讓小綠人指向前進方向
         findViewById(R.id.arrow).setRotation(location.getBearing());
         double[] res = mProj.LL2UTM(location.getLongitude(), location.getLatitude(), 0);
-        double[] res2 = mProj.LL2TM2(location.getLongitude(), location.getLatitude());
+        O = mProj.LL2TM2(location.getLongitude(), location.getLatitude());
 
         setTextFor(R.id.asa, String.format(Locale.TRADITIONAL_CHINESE,"精確度:%s 橢球高:%.2f公尺 速度:%.2f公尺/秒",
                 location.hasAccuracy() ? String.format(Locale.TRADITIONAL_CHINESE, "%.1f公尺",location.getAccuracy()):"未知",
@@ -212,13 +239,13 @@ public class CompassActivity extends AppCompatActivity {
         float bearing = location.getBearing();
         setTextFor(R.id.bearing, String.format(Locale.TRADITIONAL_CHINESE, "航　向: %s", sotwFormatter.format(bearing)+" "+Tools.ang2Str(bearing)));
         setTextFor(R.id.utm6, String.format(Locale.TRADITIONAL_CHINESE,    "UTM6 : E%.2f, N%.2f", res[0], res[1]));
-        setTextFor(R.id.tm2, String.format(Locale.TRADITIONAL_CHINESE,     "TM2  : E%.2f, N%.2f", res2[0], res2[1]));
+        setTextFor(R.id.tm2, String.format(Locale.TRADITIONAL_CHINESE,     "TM2  : E%.2f, N%.2f", O[0], O[1]));
 
-        double dx = res2[0] - lastX;
-        double dy = res2[1]  - lastY;
+        double dx = O[0] - lastX;
+        double dy = O[1]  - lastY;
         if (Math.sqrt(dx*dx + dy*dy) > 1) {
-            lastX = res2[0];
-            lastY = res2[1];
+            lastX = O[0];
+            lastY = O[1];
             cps = cpdb.getCp(lastX, lastY, 0);
             if (cps.size() > 0) {
                 // 先依距離排序
@@ -229,29 +256,8 @@ public class CompassActivity extends AppCompatActivity {
                     else if (d == 0) return 0;
                     else return -1;
                 });
-                String cpMsg = "";
-                int count = 0;
-                for (CPDB.CP cp : cps) {
-                    count = count + 1;
-                    double dx1 = cp.x - res2[0], dy1 = cp.y-res2[1];
-                    double[] resCP = Tools.POLd(dy1, dx1);
-//                    cpMsg += String.format(Locale.CHINESE, "[%s]%s\n@%d(%s)\n%.0fE,%.0fN\n距離=%.2f公尺\n方位=%s\n",
-//                            cp.number, (cp.name.length()>0?cp.name:""),
-//                            cp.t, cpName(cp.t),
-//                            cp.x, cp.y,
-//                            resCP[0],
-//                            Tools.Deg2DmsStr2(resCP[1])
-//                    );
-                    cpMsg += String.format(Locale.CHINESE, "[%s]%s#%d　E%.0f,N%.0f　%.2f公尺\n",
-                            cp.number, (cp.name.length()>0?cp.name:""), cp.t,
-                            cp.x, cp.y,
-                            resCP[0]
-                    );
-                    if (count > 5) {
-                        break;
-                    }
-                }
-                setTextFor(R.id.cp, cpMsg);
+                cpsAdapter = new CpsAdapter((Context) this, (ArrayList)cps);
+                lvCps.setAdapter(cpsAdapter);
             }
         }
     }
