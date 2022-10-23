@@ -40,7 +40,7 @@ import java.util.Locale;
 
 
 public class CompassActivity extends AppCompatActivity {
-    private static final String TAG = "CompassActivity";
+    private static final String TAG = "Compass";
     BroadcastReceiver locationBroadcastReceiver;
     private boolean wasLocationPermissionGranted = false;
 
@@ -55,44 +55,37 @@ public class CompassActivity extends AppCompatActivity {
     private static CpsAdapter cpsAdapter;
     private List<CPDB.CP> cps = new ArrayList<>();
     private double[] O = new double[]{0,0};
+    private int phoneOrientation = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_compass);
-
-		// Compass
-        sotwFormatter = new SOTWFormatter(this);
-
-        arrowView = findViewById(R.id.main_image_dial);
         setupCompass();
-
-        // GPS
+        sotwFormatter = new SOTWFormatter(this);
         checkPermissions();
         mProj = new Proj();
         cpdb = new CPDB(this);
-
-        lvCps = findViewById(R.id.cps);
-        lvCps.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-                CPDB.CP cp = cps.get(position);
-                double dx1 = cp.x - O[0], dy1 = cp.y-O[1];
-                double[] toCp = Tools.POLd(dy1, dx1);
-
-                Snackbar.make(view, "控制點", Snackbar.LENGTH_LONG)
-                        .setText(String.format(Locale.CHINESE, "[%s]%s @%d(%s) %.2f公尺\n方位=%s E%.0f,N%.0f",
-                                cp.number, (cp.name.length()>0?cp.name:""),
-                                cp.t, cpName(cp.t),
-                                toCp[0], Tools.Deg2DmsStr2(toCp[1]),
-                                cp.x, cp.y
-                        ))
-                        .show();
-            }
-        });
-        compass.setPhoneOrientation(getResources().getConfiguration().orientation);
+        setPhoneOrientation(getResources().getConfiguration().orientation);
     }
+
+    private AdapterView.OnItemClickListener onItemClickListener = new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            CPDB.CP cp = cps.get(position);
+            double dx1 = cp.x - O[0], dy1 = cp.y-O[1];
+            double[] toCp = Tools.POLd(dy1, dx1);
+
+            Snackbar.make(view, "控制點", Snackbar.LENGTH_LONG)
+                    .setText(String.format(Locale.CHINESE, "[%s]%s @%d(%s) %.2f公尺\n方位=%s E%.0f,N%.0f",
+                            cp.number, (cp.name.length()>0?cp.name:""),
+                            cp.t, cpName(cp.t),
+                            toCp[0], Tools.Deg2DmsStr2(toCp[1]),
+                            cp.x, cp.y
+                    ))
+                    .show();
+        }
+    };
 
     @Override
     protected void onStart() {
@@ -159,16 +152,20 @@ public class CompassActivity extends AppCompatActivity {
         };
     }
 
+    private void setPhoneOrientation(int dir) {
+        setContentView(R.layout.activity_compass);
+        lvCps = findViewById(R.id.cps);
+        lvCps.setOnItemClickListener(onItemClickListener);
+
+        arrowView = findViewById(R.id.main_image_dial);
+        compass.setPhoneOrientation(dir);
+    }
+
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-
-        // Checks the orientation of the screen
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            compass.setPhoneOrientation(Configuration.ORIENTATION_LANDSCAPE);
-        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
-            compass.setPhoneOrientation(Configuration.ORIENTATION_PORTRAIT);
-        }
+        phoneOrientation = getDisplay().getRotation();
+        setPhoneOrientation(phoneOrientation);
     }
 
     ////////////////////////////////////////////////////////////////////
@@ -242,19 +239,33 @@ public class CompassActivity extends AppCompatActivity {
         findViewById(R.id.arrow).setRotation(location.getBearing());
         double[] res = mProj.LL2UTM(location.getLongitude(), location.getLatitude(), 0);
         O = mProj.LL2TM2(location.getLongitude(), location.getLatitude());
+        // location.hasAccuracy()  location.getAccuracy()
 
-        setTextFor(R.id.asa, String.format(Locale.TRADITIONAL_CHINESE,"精確度:%s 橢球高:%.2f公尺 速度:%.2f公尺/秒",
-                location.hasAccuracy() ? String.format(Locale.TRADITIONAL_CHINESE, "%.1f公尺",location.getAccuracy()):"未知",
-        location.getAltitude(), location.getSpeed()));
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            setTextFor(R.id.altitude, String.format(Locale.TRADITIONAL_CHINESE, "橢球高:%.2f公尺",
+                    location.getAltitude()));
+            setTextFor(R.id.speed, String.format(Locale.TRADITIONAL_CHINESE, "速度:%.2f公尺/秒",
+                    location.getSpeed()));
+            setTextFor(R.id.longitude, "經　度: " + Tools.Deg2DmsStr2(location.getLongitude()));
+            setTextFor(R.id.latitude, "緯　度: " + Tools.Deg2DmsStr2(location.getLatitude()));
 
-        setTextFor(R.id.longitude, "經　度: " + Tools.Deg2DmsStr2(location.getLongitude()));
-        setTextFor(R.id.latitude, "緯　度: " + Tools.Deg2DmsStr2(location.getLatitude()));
+            float bearing = location.getBearing();
+            setTextFor(R.id.bearing, String.format(Locale.TRADITIONAL_CHINESE, "航　向: %s", sotwFormatter.format(bearing) + " " + Tools.ang2Str(bearing)));
+            setTextFor(R.id.utm6, String.format(Locale.TRADITIONAL_CHINESE, "UTM6 : E%.2f, N%.2f", res[0], res[1]));
+            setTextFor(R.id.tm2, String.format(Locale.TRADITIONAL_CHINESE, "TM2  : E%.2f, N%.2f", O[0], O[1]));
+        } else {
+            setTextFor(R.id.asa, String.format(Locale.TRADITIONAL_CHINESE,"精確度:%s 橢球高:%.2f公尺 >速度:%.2f公尺/秒",
+                    location.hasAccuracy() ? String.format(Locale.TRADITIONAL_CHINESE, "%.1f公尺",location.getAccuracy()):"未知",
+                    location.getAltitude(), location.getSpeed()));
 
-        float bearing = location.getBearing();
-        setTextFor(R.id.bearing, String.format(Locale.TRADITIONAL_CHINESE, "航　向: %s", sotwFormatter.format(bearing)+" "+Tools.ang2Str(bearing)));
-        setTextFor(R.id.utm6, String.format(Locale.TRADITIONAL_CHINESE,    "UTM6 : E%.2f, N%.2f", res[0], res[1]));
-        setTextFor(R.id.tm2, String.format(Locale.TRADITIONAL_CHINESE,     "TM2  : E%.2f, N%.2f", O[0], O[1]));
+            setTextFor(R.id.longitude, "經　度: " + Tools.Deg2DmsStr2(location.getLongitude()));
+            setTextFor(R.id.latitude, "緯　度: " + Tools.Deg2DmsStr2(location.getLatitude()));
 
+            float bearing = location.getBearing();
+            setTextFor(R.id.bearing, String.format(Locale.TRADITIONAL_CHINESE, "航　向: %s", sotwFormatter.format(bearing)+" "+Tools.ang2Str(bearing)));
+            setTextFor(R.id.utm6, String.format(Locale.TRADITIONAL_CHINESE,    "UTM6 : E%.2f, N%.2f", res[0], res[1]));
+            setTextFor(R.id.tm2, String.format(Locale.TRADITIONAL_CHINESE,     "TM2  : E%.2f, N%.2f", O[0], O[1]));
+        }
         double dx = O[0] - lastX;
         double dy = O[1]  - lastY;
         if (Math.sqrt(dx*dx + dy*dy) > 1) {
@@ -277,7 +288,11 @@ public class CompassActivity extends AppCompatActivity {
     }
 
     private void setTextFor(int p, String text) {
-        ((TextView) findViewById(p)).setText(text);
+        TextView tv = (TextView) findViewById(p);
+        if (tv == null) {
+            Log.i(TAG, "setTextFor is null for "+text);
+        }
+        tv.setText(text);
     }
 
 }

@@ -53,7 +53,7 @@ public class CpsAdapter extends ArrayAdapter<CPDB.CP> {
             viewHolder = (ViewHolder) convertView.getTag();
         }
         lastPosition = position;
-        viewHolder.cpStr.setText(String.format(Locale.CHINESE, "[%s]%s#%d E%.0f,N%.0f\n",
+        viewHolder.cpStr.setText(String.format(Locale.CHINESE, "[%s]%s#%d\nE%.0f,N%.0f",
                 cp.number, (cp.name.length()>0?cp.name:""), cp.t,
                 cp.x, cp.y));
         return convertView;

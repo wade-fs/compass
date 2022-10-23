@@ -17,7 +17,7 @@ public class Compass implements SensorEventListener {
     }
 
     private CompassListener listener;
-    private int phoneOrientation = Configuration.ORIENTATION_PORTRAIT;
+    private int phoneOrientation = 0;
     private SensorManager sensorManager;
     private Sensor gsensor;
     private Sensor msensor;
@@ -80,10 +80,11 @@ public class Compass implements SensorEventListener {
                 SensorManager.getOrientation(R, orientation);
                 // Log.d(TAG, "azimuth (rad): " + azimuth);
                 azimuth = (float) Math.toDegrees(orientation[0]); // orientation
-                if (phoneOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+                if (phoneOrientation == 1) {
                     azimuth = azimuth + 90.0f;
+                } else if (phoneOrientation == 3) {
+                    azimuth = azimuth - 90.0f;
                 }
-                Log.d("GPS", "Ori: "+phoneOrientation);
                 azimuth = (azimuth + 360) % 360;
                 // Log.d(TAG, "azimuth (deg): " + azimuth);
                 if (listener != null) {
