@@ -212,7 +212,7 @@ public class CompassActivity extends AppCompatActivity {
         float bearing = location.getBearing();
         setTextFor(R.id.bearing, String.format(Locale.TRADITIONAL_CHINESE, "航　向: %s", sotwFormatter.format(bearing)+" "+Tools.ang2Str(bearing)));
         setTextFor(R.id.utm6, String.format(Locale.TRADITIONAL_CHINESE,    "UTM6 : E%.2f, N%.2f", res[0], res[1]));
-        setTextFor(R.id.tm2, String.format(Locale.TRADITIONAL_CHINESE,    "TM2　　: E%.2f, N%.2f", res2[0], res2[1]));
+        setTextFor(R.id.tm2, String.format(Locale.TRADITIONAL_CHINESE,     "TM2  : E%.2f, N%.2f", res2[0], res2[1]));
 
         double dx = res2[0] - lastX;
         double dy = res2[1]  - lastY;
@@ -230,7 +230,9 @@ public class CompassActivity extends AppCompatActivity {
                     else return -1;
                 });
                 String cpMsg = "";
+                int count = 0;
                 for (CPDB.CP cp : cps) {
+                    count = count + 1;
                     double dx1 = cp.x - res2[0], dy1 = cp.y-res2[1];
                     double[] resCP = Tools.POLd(dy1, dx1);
 //                    cpMsg += String.format(Locale.CHINESE, "[%s]%s\n@%d(%s)\n%.0fE,%.0fN\n距離=%.2f公尺\n方位=%s\n",
@@ -245,6 +247,9 @@ public class CompassActivity extends AppCompatActivity {
                             cp.x, cp.y,
                             resCP[0]
                     );
+                    if (count > 5) {
+                        break;
+                    }
                 }
                 setTextFor(R.id.cp, cpMsg);
             }
