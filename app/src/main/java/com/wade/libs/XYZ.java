@@ -44,43 +44,52 @@ public class XYZ extends SQLiteAssetHelper {
         // 先找出完整比對的結果
         B bru=new B(), blu=new B(), bld=new B(), brd=new B();
 
-        Log.d(TAG, "LU select * from "+TABLE+" where X <= "+x+" and Y >= "+y+" and L="+l+" order by x desc, y asc limit 1;", null);
-// 4. use Cursor to retrieve rows
         Cursor clu = db.rawQuery("select * from "+TABLE+" where X <= "+x+" and Y >= "+y+" and L="+l+" order by x desc, y asc limit 1;", null);
         if(clu.moveToFirst()){
-// 5. get the field from row
-            blu.x  = clu.getDouble(clu.getColumnIndex(X));
-            blu.y  = clu.getDouble(clu.getColumnIndex(Y));
-            blu.z  = clu.getDouble(clu.getColumnIndex(H));
-            Log.d(TAG, String.format(" LU(%.2f,%.2f) : %.3f", blu.x, blu.y, blu.z));
-        } else Log.d(TAG, "No LU");
-// 6. XYZ xyz = new XYZ(context); // 這個定義在 Activity 中
-        Log.d(TAG, "RU select * from "+TABLE+" where X >= "+x+" and Y >= "+y+" and L="+l+" order by x asc, y asc limit 1;");
+			int iX = clu.getColumnIndex(X);
+			int iY = clu.getColumnIndex(Y);
+			int iH = clu.getColumnIndex(H);
+			if (iX >= 0 && iY >= 0 && iH >= 0) {
+            	blu.x  = clu.getDouble(iX);
+            	blu.y  = clu.getDouble(iY);
+            	blu.z  = clu.getDouble(iH);
+			}
+        }
         Cursor cru = db.rawQuery("select * from "+TABLE+" where X >= "+x+" and Y >= "+y+" and L="+l+" order by x asc, y asc limit 1;", null);
         if(cru.moveToFirst()){
-            bru.x  = cru.getDouble(cru.getColumnIndex(X));
-            bru.y  = cru.getDouble(cru.getColumnIndex(Y));
-            bru.z  = cru.getDouble(cru.getColumnIndex(H));
-            Log.d(TAG, String.format(" RU(%.2f,%.2f) : %.3f", bru.x, bru.y, bru.z));
-        } else Log.d(TAG, "No RU");
+			int iX = cru.getColumnIndex(X);
+			int iY = cru.getColumnIndex(Y);
+			int iH = cru.getColumnIndex(H);
+			if (iX >= 0 && iY >= 0 && iH >= 0) {
+            	bru.x  = cru.getDouble(iX);
+            	bru.y  = cru.getDouble(iY);
+            	bru.z  = cru.getDouble(iH);
+			}
+        }
 
-        Log.d(TAG,"LD select * from "+TABLE+" where X <= "+x+" and Y <= "+y+" and L="+l+" order by x desc, y desc limit 1;");
         Cursor cld = db.rawQuery("select * from "+TABLE+" where X <= "+x+" and Y <= "+y+" and L="+l+" order by x desc, y desc limit 1;", null);
         if(cld.moveToFirst()){
-            bld.x  = cld.getDouble(cld.getColumnIndex(X));
-            bld.y  = cld.getDouble(cld.getColumnIndex(Y));
-            bld.z  = cld.getDouble(cld.getColumnIndex(H));
-            Log.d(TAG, String.format(" LD(%.2f,%.2f) : %.3f", bld.x, bld.y, bld.z));
-        } else Log.d(TAG, "No LD");
+			int iX = cld.getColumnIndex(X);
+			int iY = cld.getColumnIndex(Y);
+			int iH = cld.getColumnIndex(H);
+			if (iX >= 0 && iY >= 0 && iH >= 0) {
+            	bld.x  = cld.getDouble(iX);
+            	bld.y  = cld.getDouble(iY);
+            	bld.z  = cld.getDouble(iH);
+			}
+        }
 
-        Log.d(TAG, "RD select * from "+TABLE+" where X >= "+x+" and Y <= "+y+" and L="+l+" order by x asc, y desc limit 1;");
         Cursor crd = db.rawQuery("select * from "+TABLE+" where X >= "+x+" and Y <= "+y+" and L="+l+" order by x asc, y desc limit 1;", null);
         if(crd.moveToFirst()){
-            brd.x  = crd.getDouble(crd.getColumnIndex(X));
-            brd.y  = crd.getDouble(crd.getColumnIndex(Y));
-            brd.z  = crd.getDouble(crd.getColumnIndex(H));
-            Log.d(TAG, String.format(" RD(%.2f,%.2f) : %.3f", brd.x, brd.y, brd.z));
-        } else Log.d(TAG, "No RD");
+			int iX = crd.getColumnIndex(X);
+			int iY = crd.getColumnIndex(Y);
+			int iH = crd.getColumnIndex(H);
+			if (iX >= 0 && iY >= 0 && iH >= 0) {
+         	   brd.x  = crd.getDouble(iX);
+         	   brd.y  = crd.getDouble(iY);
+         	   brd.z  = crd.getDouble(iH);
+			}
+        }
 
         double h=0, r=100000000;
         if (blu.x > 0) {

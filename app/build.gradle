@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
 		applicationId 'com.wade.compass'
-        minSdkVersion 16
+        minSdkVersion 30
         targetSdkVersion 33
         versionCode 20221023
         versionName "20221023"

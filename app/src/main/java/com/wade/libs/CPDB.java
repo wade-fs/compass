@@ -53,14 +53,26 @@ public class CPDB extends SQLiteAssetHelper {
                 null);
         List<CP> cps = new ArrayList<>();
         while (cursor.moveToNext()) {
-            CP cp = new CP(cursor.getInt(cursor.getColumnIndex(ID)),
-                    cursor.getInt(cursor.getColumnIndex(T)),
-                    cursor.getString(cursor.getColumnIndex(Number)),
-                    cursor.getString(cursor.getColumnIndex(Name)),
-                    cursor.getDouble(cursor.getColumnIndex(X)),
-                    cursor.getDouble(cursor.getColumnIndex(Y)),
-                    cursor.getDouble(cursor.getColumnIndex(H)),
-                    cursor.getString(cursor.getColumnIndex(INFO))
+			int iId     = cursor.getColumnIndex(ID);
+			int iT      = cursor.getColumnIndex(T);
+			int iNumber = cursor.getColumnIndex(Number);
+			int iName   = cursor.getColumnIndex(Name);
+			int iX      = cursor.getColumnIndex(X);
+			int iY      = cursor.getColumnIndex(Y);
+			int iH      = cursor.getColumnIndex(H);
+			int iInfo   = cursor.getColumnIndex(INFO);
+			if (iId < 0 || iT < 0 || iNumber < 0 || iName < 0 ||
+				iX < 0 || iY < 0 || iH < 0 || iInfo < 0) {
+				continue;
+			}
+            CP cp = new CP(cursor.getInt(iId),
+                    cursor.getInt(iT),
+                    cursor.getString(iNumber),
+                    cursor.getString(iName),
+                    cursor.getDouble(iX),
+                    cursor.getDouble(iY),
+                    cursor.getDouble(iH),
+                    cursor.getString(iInfo)
             );
             cps.add(cp);
         }
@@ -84,17 +96,28 @@ public class CPDB extends SQLiteAssetHelper {
                     (y - distance) + " <= y and y <= " + (y + distance);
             Cursor cursor = db.rawQuery(q, null);
             while (cursor.moveToNext()) {
-                CP cp = new CP(cursor.getInt(cursor.getColumnIndex(ID)),
-                        cursor.getInt(cursor.getColumnIndex(T)),
-                        cursor.getString(cursor.getColumnIndex(Number)),
-                        cursor.getString(cursor.getColumnIndex(Name)),
-                        cursor.getDouble(cursor.getColumnIndex(X)),
-                        cursor.getDouble(cursor.getColumnIndex(Y)),
-                        cursor.getDouble(cursor.getColumnIndex(H)),
-                        cursor.getString(cursor.getColumnIndex(INFO))
-                );
+				int iId     = cursor.getColumnIndex(ID);
+				int iT      = cursor.getColumnIndex(T);
+				int iNumber = cursor.getColumnIndex(Number);
+				int iName   = cursor.getColumnIndex(Name);
+				int iX      = cursor.getColumnIndex(X);
+				int iY      = cursor.getColumnIndex(Y);
+				int iH      = cursor.getColumnIndex(H);
+				int iInfo   = cursor.getColumnIndex(INFO);
+				if (iId < 0 || iT < 0 || iNumber < 0 || iName < 0 ||
+					iX < 0 || iY < 0 || iH < 0 || iInfo < 0) {
+					continue;
+				}
+            	CP cp = new CP(cursor.getInt(iId),
+            	        cursor.getInt(iT),
+            	        cursor.getString(iNumber),
+            	        cursor.getString(iName),
+            	        cursor.getDouble(iX),
+            	        cursor.getDouble(iY),
+            	        cursor.getDouble(iH),
+            	        cursor.getString(iInfo)
+            	);
                 if (len(cp.y - y, cp.x - x) <= distance) {
-//                    Log.d(TAG, "add CP : "+cp.id+", "+cp.number+","+cp.name+" for distance "+distance);
                     cps.add(cp);
                 }
             }

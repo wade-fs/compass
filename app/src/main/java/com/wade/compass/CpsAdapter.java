@@ -21,6 +21,7 @@ import java.util.Locale;
 public class CpsAdapter extends ArrayAdapter<CPDB.CP> {
     Context context;
     private ArrayList<CPDB.CP> dataSet;
+	private int phoneOrientation;
 
     public CpsAdapter(Context context, ArrayList<CPDB.CP> cps) {
         super(context, R.layout.cps_list, cps);
@@ -31,6 +32,10 @@ public class CpsAdapter extends ArrayAdapter<CPDB.CP> {
     private static class ViewHolder {
         TextView cpStr;
     }
+
+	public void setOrientation(int ori) {
+		phoneOrientation = ori;
+	}
 
     private int lastPosition = -1;
 
@@ -53,9 +58,15 @@ public class CpsAdapter extends ArrayAdapter<CPDB.CP> {
             viewHolder = (ViewHolder) convertView.getTag();
         }
         lastPosition = position;
-        viewHolder.cpStr.setText(String.format(Locale.CHINESE, "[%s]%s#%d\nE%.0f,N%.0f",
+		if (phoneOrientation % 2 == 1) {
+        	viewHolder.cpStr.setText(String.format(Locale.CHINESE, "[%s]%s#%d\nE%.0f,N%.0f",
                 cp.number, (cp.name.length()>0?cp.name:""), cp.t,
                 cp.x, cp.y));
+		} else {
+        	viewHolder.cpStr.setText(String.format(Locale.CHINESE, "[%s]%s#%d E%.0f,N%.0f",
+                cp.number, (cp.name.length()>0?cp.name:""), cp.t,
+                cp.x, cp.y));
+		}
         return convertView;
     }
 }

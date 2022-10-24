@@ -171,15 +171,22 @@ public class CompassActivity extends AppCompatActivity {
     ////////////////////////////////////////////////////////////////////
 	// GPS
 	////////////////////////////////////////////////////////////////////
-    private ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(
-            new ActivityResultContracts.RequestPermission(), isGranted -> {
-                wasLocationPermissionGranted = isGranted;
-                if (isGranted) {
-                    startLocationService();
-                } else {
-                    explainTheNeedForPermission();
-                }
-            });
+
+	private ActivityResultLauncher<String[]> requestPermissionLauncher = registerForActivityResult(
+		new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+            Boolean fineLocationGranted = result.getOrDefault(
+                    Manifest.permission.ACCESS_FINE_LOCATION, false);
+            Boolean coarseLocationGranted = result.getOrDefault(
+                    Manifest.permission.ACCESS_COARSE_LOCATION,false);
+            if (fineLocationGranted != null && fineLocationGranted) {
+                startLocationService();
+            } else if (coarseLocationGranted != null && coarseLocationGranted) {
+                startLocationService();
+            } else {
+                explainTheNeedForPermission();
+            }
+        }
+    );
 
     private void startLocationService() {
         subscribeToLocationService();
@@ -196,18 +203,27 @@ public class CompassActivity extends AppCompatActivity {
     }
 
     private void checkPermissions() {
-        String locationPermission = Manifest.permission.ACCESS_FINE_LOCATION;
+        String finePermission = Manifest.permission.ACCESS_FINE_LOCATION;
+        String goodPermission = Manifest.permission.ACCESS_COARSE_LOCATION;
 
-        int result = ContextCompat.checkSelfPermission(this, locationPermission);
-        wasLocationPermissionGranted = result == PackageManager.PERMISSION_GRANTED;
+        int resFine = ContextCompat.checkSelfPermission(this, finePermission);
+        int resGood = ContextCompat.checkSelfPermission(this, goodPermission);
+        wasLocationPermissionGranted =
+			resFine == PackageManager.PERMISSION_GRANTED ||
+			resGood == PackageManager.PERMISSION_GRANTED
+			;
 
         if (wasLocationPermissionGranted) {
             startLocationService();
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (shouldShowRequestPermissionRationale(locationPermission)) {
+            if (shouldShowRequestPermissionRationale(finePermission) ||
+				shouldShowRequestPermissionRationale(goodPermission)) {
                 explainTheNeedForPermission();
             } else {
-                requestPermissionLauncher.launch(locationPermission);
+                requestPermissionLauncher.launch(new String[] {
+					Manifest.permission.ACCESS_FINE_LOCATION,
+					Manifest.permission.ACCESS_COARSE_LOCATION
+				});
             }
         }
     }
@@ -241,31 +257,17 @@ public class CompassActivity extends AppCompatActivity {
         O = mProj.LL2TM2(location.getLongitude(), location.getLatitude());
         // location.hasAccuracy()  location.getAccuracy()
 
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            setTextFor(R.id.altitude, String.format(Locale.TRADITIONAL_CHINESE, "橢球高:%.2f公尺",
+        setTextFor(R.id.altitude, String.format(Locale.TRADITIONAL_CHINESE, "橢球高:%.2f公尺",
                     location.getAltitude()));
-            setTextFor(R.id.speed, String.format(Locale.TRADITIONAL_CHINESE, "速度:%.2f公尺/秒",
+        setTextFor(R.id.speed, String.format(Locale.TRADITIONAL_CHINESE, "速度:%.2f公尺/秒",
                     location.getSpeed()));
-            setTextFor(R.id.longitude, "經　度: " + Tools.Deg2DmsStr2(location.getLongitude()));
-            setTextFor(R.id.latitude, "緯　度: " + Tools.Deg2DmsStr2(location.getLatitude()));
+        setTextFor(R.id.longitude, "經　度: " + Tools.Deg2DmsStr2(location.getLongitude()));
+        setTextFor(R.id.latitude, "緯　度: " + Tools.Deg2DmsStr2(location.getLatitude()));
 
-            float bearing = location.getBearing();
-            setTextFor(R.id.bearing, String.format(Locale.TRADITIONAL_CHINESE, "航　向: %s", sotwFormatter.format(bearing) + " " + Tools.ang2Str(bearing)));
-            setTextFor(R.id.utm6, String.format(Locale.TRADITIONAL_CHINESE, "UTM6 : E%.2f, N%.2f", res[0], res[1]));
-            setTextFor(R.id.tm2, String.format(Locale.TRADITIONAL_CHINESE, "TM2  : E%.2f, N%.2f", O[0], O[1]));
-        } else {
-            setTextFor(R.id.asa, String.format(Locale.TRADITIONAL_CHINESE,"精確度:%s 橢球高:%.2f公尺 >速度:%.2f公尺/秒",
-                    location.hasAccuracy() ? String.format(Locale.TRADITIONAL_CHINESE, "%.1f公尺",location.getAccuracy()):"未知",
-                    location.getAltitude(), location.getSpeed()));
-
-            setTextFor(R.id.longitude, "經　度: " + Tools.Deg2DmsStr2(location.getLongitude()));
-            setTextFor(R.id.latitude, "緯　度: " + Tools.Deg2DmsStr2(location.getLatitude()));
-
-            float bearing = location.getBearing();
-            setTextFor(R.id.bearing, String.format(Locale.TRADITIONAL_CHINESE, "航　向: %s", sotwFormatter.format(bearing)+" "+Tools.ang2Str(bearing)));
-            setTextFor(R.id.utm6, String.format(Locale.TRADITIONAL_CHINESE,    "UTM6 : E%.2f, N%.2f", res[0], res[1]));
-            setTextFor(R.id.tm2, String.format(Locale.TRADITIONAL_CHINESE,     "TM2  : E%.2f, N%.2f", O[0], O[1]));
-        }
+        float bearing = location.getBearing();
+        setTextFor(R.id.bearing, String.format(Locale.TRADITIONAL_CHINESE, "航向:%s %.2f密位", sotwFormatter.format(bearing), Tools.Deg2Mil(bearing)));
+        setTextFor(R.id.utm6, String.format(Locale.TRADITIONAL_CHINESE, "UTM6:E%.2f, N%.2f", res[0], res[1]));
+        setTextFor(R.id.tm2, String.format(Locale.TRADITIONAL_CHINESE, "TM2:E%.2f, N%.2f", O[0], O[1]));
         double dx = O[0] - lastX;
         double dy = O[1]  - lastY;
         if (Math.sqrt(dx*dx + dy*dy) > 1) {
@@ -282,6 +284,7 @@ public class CompassActivity extends AppCompatActivity {
                     else return -1;
                 });
                 cpsAdapter = new CpsAdapter((Context) this, (ArrayList)cps);
+				cpsAdapter.setOrientation(phoneOrientation);
                 lvCps.setAdapter(cpsAdapter);
             }
         }
@@ -294,5 +297,4 @@ public class CompassActivity extends AppCompatActivity {
         }
         tv.setText(text);
     }
-
 }
